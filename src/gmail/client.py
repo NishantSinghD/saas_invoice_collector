@@ -17,7 +17,22 @@ def get_gmail_service():
 
 def get_recent_messages(service, max_results=10):
     """Retrieve recent Gmail messages."""
+def get_messages_for_date_range(service, start_date, end_date):
+    """Retrieve Gmail messages received within a date range."""
 
+    query = f"after:{start_date} before:{end_date}"
+
+    response = (
+        service.users()
+        .messages()
+        .list(
+            userId="me",
+            q=query,
+        )
+        .execute()
+    )
+
+    return response.get("messages", [])
     response = (
         service.users()
         .messages()
@@ -61,7 +76,7 @@ def get_message_subject(service, message_id):
 if __name__ == "__main__":
     service = get_gmail_service()
 
-    messages = get_recent_messages(service)
+   messages = get_recent_messages(service)
 
     print(f"Found {len(messages)} messages.")
 
