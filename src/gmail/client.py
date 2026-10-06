@@ -1,3 +1,8 @@
+from src.gmail.parser import (
+    extract_message_body,
+    get_attachments,
+    get_headers,
+)
 from googleapiclient.discovery import build
 
 from src.gmail.auth import get_credentials
@@ -17,6 +22,20 @@ def get_gmail_service():
 
 def get_recent_messages(service, max_results=10):
     """Retrieve recent Gmail messages."""
+
+    response = (
+        service.users()
+        .messages()
+        .list(
+            userId="me",
+            maxResults=max_results,
+        )
+        .execute()
+    )
+
+    return response.get("messages", [])
+
+
 def get_messages_for_date_range(service, start_date, end_date):
     """Retrieve Gmail messages received within a date range."""
 
@@ -28,17 +47,6 @@ def get_messages_for_date_range(service, start_date, end_date):
         .list(
             userId="me",
             q=query,
-        )
-        .execute()
-    )
-
-    return response.get("messages", [])
-    response = (
-        service.users()
-        .messages()
-        .list(
-            userId="me",
-            maxResults=max_results,
         )
         .execute()
     )
@@ -73,17 +81,50 @@ def get_message_subject(service, message_id):
     )
 
 
+def get_message(service, message_id):
+    """Retrieve a complete Gmail message."""
+
+    return (
+        service.users()
+        .messages()
+        .get(
+            userId="me",
+            id=message_id,
+            format="full",
+        )
+        .execute()
+    )
+
+
 if __name__ == "__main__":
     service = get_gmail_service()
 
-   messages = get_recent_messages(service)
+    messages = get_recent_messages(service)
 
     print(f"Found {len(messages)} messages.")
 
-    for message in messages:
-        subject = get_message_subject(
+    if messages:
+        message = get_message(
             service,
-            message["id"],
+            messages[0]["id"],
         )
 
-        print(f"- {subject}")
+        headers = get_headers(message)
+        plain_text, html = extract_message_body(message)
+        attachments = get_attachments(message)
+        print(f"From: {headers.get('from', '(unknown)')}")
+        print(f"Subject: {headers.get('subject', '(unknown)')}")
+        print(f"Date: {headers.get('date', '(unknown)')}")
+
+        print("\nPlain-text body:")
+        print(plain_text[:500])
+
+        print("\nHTML body:")
+        print(html[:500])
+        print("\nAttachments:")
+
+for attachment in attachments:
+    print(
+        f"- {attachment['filename']} "
+        f"({attachment['mime_type']})"
+    )
