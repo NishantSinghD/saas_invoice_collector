@@ -1,11 +1,7 @@
-from src.gmail.parser import (
-    extract_message_body,
-    get_attachments,
-    get_headers,
-)
 from googleapiclient.discovery import build
 
 from src.gmail.auth import get_credentials
+from src.gmail.parser import get_attachments
 
 
 def get_gmail_service():
@@ -96,6 +92,28 @@ def get_message(service, message_id):
     )
 
 
+def download_attachment(service, message_id, attachment_id):
+    """Download a Gmail attachment and return its raw bytes."""
+
+    import base64
+
+    response = (
+        service.users()
+        .messages()
+        .attachments()
+        .get(
+            userId="me",
+            messageId=message_id,
+            id=attachment_id,
+        )
+        .execute()
+    )
+
+    return base64.urlsafe_b64decode(
+        response["data"]
+    )
+
+
 if __name__ == "__main__":
     service = get_gmail_service()
 
@@ -103,28 +121,10 @@ if __name__ == "__main__":
 
     print(f"Found {len(messages)} messages.")
 
-    if messages:
-        message = get_message(
+    for message in messages:
+        subject = get_message_subject(
             service,
-            messages[0]["id"],
+            message["id"],
         )
 
-        headers = get_headers(message)
-        plain_text, html = extract_message_body(message)
-        attachments = get_attachments(message)
-        print(f"From: {headers.get('from', '(unknown)')}")
-        print(f"Subject: {headers.get('subject', '(unknown)')}")
-        print(f"Date: {headers.get('date', '(unknown)')}")
-
-        print("\nPlain-text body:")
-        print(plain_text[:500])
-
-        print("\nHTML body:")
-        print(html[:500])
-        print("\nAttachments:")
-
-for attachment in attachments:
-    print(
-        f"- {attachment['filename']} "
-        f"({attachment['mime_type']})"
-    )
+        print(f"- {subject}")
