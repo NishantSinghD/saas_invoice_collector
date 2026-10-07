@@ -1,3 +1,4 @@
+
 from pathlib import Path
 
 from src.invoices.deduplication import calculate_file_hash
@@ -17,29 +18,66 @@ def process_pdf_invoices(
     source_account="",
     source_email_id="",
 ):
-    """Process a collection of PDF invoices."""
+    """Process local PDF invoices into standardized outputs."""
+
+    records = [
+        {
+            "file_path": Path(pdf_file),
+            "source_account": source_account,
+            "source_email_id": source_email_id,
+        }
+        for pdf_file in pdf_files
+    ]
+
+    return process_invoice_records(
+        records,
+        output_directory,
+        summary_path,
+        expected_vendors,
+    )
+
+
+def process_invoice_records(
+    records,
+    output_directory,
+    summary_path,
+    expected_vendors,
+):
+    """Process PDF records while preserving per-email metadata."""
 
     invoices = []
     seen_hashes = set()
+    seen_identities = set()
 
-    for pdf_file in pdf_files:
-        pdf_file = Path(pdf_file)
-
+    for record in records:
+        pdf_file = Path(record["file_path"])
         file_hash = calculate_file_hash(pdf_file)
 
         if file_hash in seen_hashes:
             continue
 
-        seen_hashes.add(file_hash)
-
         invoice = process_invoice_pdf(
-    pdf_file,
-    source_account=source_account,
-    source_email_id=source_email_id,
-)
+            pdf_file,
+            source_account=record.get("source_account", ""),
+            source_email_id=record.get("source_email_id", ""),
+        )
 
         if invoice is None:
             continue
+
+        invoice_identity = (
+            invoice.vendor.strip().casefold(),
+            invoice.invoice_number.strip().casefold(),
+            invoice.invoice_date,
+            invoice.amount,
+            invoice.currency.upper(),
+        )
+
+        if invoice_identity in seen_identities:
+            continue
+
+        seen_hashes.add(file_hash)
+        seen_identities.add(invoice_identity)
 
         invoice.invoice_hash = file_hash
 
@@ -50,13 +88,9 @@ def process_pdf_invoices(
         )
 
         invoice.file_path = str(destination)
-
         invoices.append(invoice)
 
-    write_summary_csv(
-        invoices,
-        summary_path,
-    )
+    write_summary_csv(invoices, summary_path)
 
     missing_vendors = find_missing_vendors(
         expected_vendors,
