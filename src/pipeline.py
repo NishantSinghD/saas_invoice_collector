@@ -1,4 +1,3 @@
-
 from pathlib import Path
 
 from src.invoices.deduplication import calculate_file_hash
@@ -60,6 +59,7 @@ def process_invoice_records(
             pdf_file,
             source_account=record.get("source_account", ""),
             source_email_id=record.get("source_email_id", ""),
+            email_body=record.get("email_body", ""),
         )
 
         if invoice is None:

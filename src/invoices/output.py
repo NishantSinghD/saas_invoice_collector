@@ -1,4 +1,12 @@
 import csv
+import re
+from pathlib import Path
+
+from reportlab.lib.pagesizes import LETTER
+from reportlab.pdfgen import canvas
+
+from src.invoices.models import InvoiceData
+import csv
 from pathlib import Path
 import re
 
@@ -52,7 +60,48 @@ def save_invoice_pdf(
 
     return destination
 
+def save_invoice_body_as_pdf(
+    email_body,
+    invoice,
+    output_directory,
+):
+    """Create a PDF invoice from the email body."""
 
+    output_directory = Path(output_directory)
+    output_directory.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    filename = build_invoice_filename(invoice)
+    destination = output_directory / filename
+
+    pdf = canvas.Canvas(
+        str(destination),
+        pagesize=LETTER,
+    )
+
+    width, height = LETTER
+    x = 72
+    y = height - 72
+
+    for line in email_body.splitlines():
+        line = line.strip()
+
+        if not line:
+            y -= 12
+            continue
+
+        pdf.drawString(x, y, line)
+        y -= 14
+
+        if y < 72:
+            pdf.showPage()
+            y = height - 72
+
+    pdf.save()
+
+    return destination
 
 
 def write_summary_csv(invoices, output_path):

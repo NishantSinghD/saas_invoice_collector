@@ -28,3 +28,34 @@ def test_process_invoice_pdf(tmp_path):
     assert invoice.source_type == "attachment"
     assert invoice.source_account == "finance-test@example.com"
     assert invoice.source_email_id == "message-123"
+def test_process_invoice_pdf_uses_email_body_for_missing_vendor(tmp_path):
+    pdf_path = tmp_path / "slack_invoice.pdf"
+
+    pdf = canvas.Canvas(str(pdf_path))
+    pdf.drawString(72, 750, "SLACK")
+    pdf.drawString(72, 730, "Invoice")
+    pdf.drawString(72, 710, "Invoice Date: September 15, 2026")
+    pdf.drawString(72, 690, "Invoice Number: SL-2026-09-001")
+    pdf.drawString(72, 670, "Amount Due: USD 125.00")
+    pdf.save()
+
+    email_body = """
+    Your September 2026 invoice is attached.
+    Vendor: Slack
+    Invoice Date: September 15, 2026
+    Invoice Number: SL-2026-09-001
+    Amount: USD 125.00
+    """
+
+    invoice = process_invoice_pdf(
+        pdf_path,
+        source_account="finance-test@example.com",
+        source_email_id="message-456",
+        email_body=email_body,
+    )
+
+    assert invoice is not None
+    assert invoice.vendor == "Slack"
+    assert invoice.amount == 125
+    assert invoice.currency == "USD"
+    assert invoice.invoice_number == "SL-2026-09-001"

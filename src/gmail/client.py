@@ -33,9 +33,12 @@ def get_recent_messages(service, max_results=10):
 
 
 def get_messages_for_date_range(service, start_date, end_date):
-    """Retrieve Gmail messages received within a date range."""
+    """Retrieve candidate Gmail messages from the start date onward."""
 
-    query = f"after:{start_date} before:{end_date}"
+    start = start_date.strftime("%Y/%m/%d")
+    query = f"after:{start}"
+
+    print(f"Gmail query: {query}")
 
     response = (
         service.users()
@@ -48,7 +51,6 @@ def get_messages_for_date_range(service, start_date, end_date):
     )
 
     return response.get("messages", [])
-
 
 def get_message_subject(service, message_id):
     """Retrieve the subject of a Gmail message."""

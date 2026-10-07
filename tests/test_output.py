@@ -6,6 +6,7 @@ from src.invoices.models import InvoiceData
 from src.invoices.output import (
     build_invoice_filename,
     sanitize_filename,
+    save_invoice_body_as_pdf,
     save_invoice_pdf,
 )
 
@@ -73,3 +74,26 @@ def test_writes_summary_csv(tmp_path):
     assert "125.00" in content
     assert "USD" in content
     assert "output/invoices/2026-09_Slack_125.00.pdf" in content
+
+def test_saves_invoice_body_as_pdf(tmp_path):
+    invoice = make_invoice()
+
+    email_body = """Your September 2026 invoice is attached.
+
+Vendor: Slack
+Invoice Date: September 15, 2026
+Invoice Number: SL-2026-09-001
+Amount: USD 125.00
+"""
+
+    output_directory = tmp_path / "invoices"
+
+    destination = save_invoice_body_as_pdf(
+        email_body,
+        invoice,
+        output_directory,
+    )
+
+    assert destination.name == "2026-09_Slack_125.00.pdf"
+    assert destination.exists()
+    assert destination.stat().st_size > 0
