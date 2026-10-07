@@ -6,6 +6,10 @@ from src.gmail.client import (
     get_message,
     get_messages_for_date_range,
 )
+from src.invoices.portal import (
+    download_portal_pdf,
+    find_billing_portal_url,
+)
 from src.gmail.parser import (
     extract_message_body,
     get_attachments,
@@ -123,6 +127,70 @@ def process_email_body_invoices(
 
     return invoices
 
+def process_billing_portal_invoice(
+    service,
+    message,
+    output_directory,
+    download_directory,
+    source_account="",
+):
+    """Download and process an invoice from a billing portal URL."""
+
+    message_id = message["id"]
+
+    full_message = get_message(
+        service,
+        message_id,
+    )
+
+    plain_text, html = extract_message_body(
+        full_message
+    )
+
+    portal_url = find_billing_portal_url(
+        f"{plain_text}\n{html}"
+    )
+
+    if not portal_url:
+        return None
+
+    download_directory = Path(download_directory)
+    download_directory.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    portal_filename = (
+        f"{message_id}_portal_invoice.pdf"
+    )
+
+    downloaded_path = download_directory / portal_filename
+
+    download_portal_pdf(
+        portal_url,
+        downloaded_path,
+    )
+
+    invoice = process_invoice_pdf(
+        downloaded_path,
+        source_account=source_account,
+        source_email_id=message_id,
+        email_body=plain_text,
+    )
+
+    if invoice is None:
+        return None
+
+    destination = save_invoice_pdf(
+        downloaded_path,
+        invoice,
+        output_directory,
+    )
+
+    invoice.file_path = str(destination)
+
+    return invoice
+
 def collect_and_process_invoices(
     service,
     messages,
@@ -136,6 +204,7 @@ def collect_and_process_invoices(
 
     pdf_records = []
     body_messages = []
+    portal_invoices = []
 
     download_directory = Path(download_directory)
     download_directory.mkdir(
@@ -169,6 +238,18 @@ def collect_and_process_invoices(
 
             pdf_records.extend(pdf_results)
 
+        elif source == "billing_portal":
+            portal_invoice = process_billing_portal_invoice(
+                service=service,
+                message=message_summary,
+                output_directory=output_directory,
+                download_directory=download_directory,
+                source_account=source_account,
+            )
+
+            if portal_invoice is not None:
+                portal_invoices.append(portal_invoice)
+
         elif source == "email_body":
             body_messages.append(message_summary)
 
@@ -187,9 +268,13 @@ def collect_and_process_invoices(
             messages=body_messages,
             output_directory=output_directory,
             source_account=source_account,
-    )
+        )
 
-    invoices = attachment_invoices + body_invoices
+    invoices = (
+        attachment_invoices
+        + portal_invoices
+        + body_invoices
+    )
 
     write_summary_csv(
         invoices,
@@ -206,7 +291,6 @@ def collect_and_process_invoices(
     ]
 
     return invoices, missing_vendors
-
 
 def collect_invoices_for_date_range(
     service,
