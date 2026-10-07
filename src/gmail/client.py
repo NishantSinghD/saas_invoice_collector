@@ -4,10 +4,12 @@ from src.gmail.auth import get_credentials
 from src.gmail.parser import get_attachments
 
 
-def get_gmail_service():
-    """Return an authenticated Gmail API service."""
+def get_gmail_service(account_name):
+    """Authenticate and return a Gmail API service for an account."""
 
-    credentials = get_credentials()
+    from googleapiclient.discovery import build
+
+    credentials = get_credentials(account_name)
 
     return build(
         "gmail",

@@ -5,7 +5,9 @@ from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 
 
-SCOPES = ["https://www.googleapis.com/auth/gmail.readonly"]
+SCOPES = [
+    "https://www.googleapis.com/auth/gmail.readonly"
+]
 
 BASE_DIR = Path(__file__).resolve().parents[2]
 CREDENTIALS_DIR = BASE_DIR / "credentials"
@@ -14,23 +16,44 @@ CLIENT_SECRET_FILE = next(
     CREDENTIALS_DIR.glob("client_secret_*.json")
 )
 
-TOKEN_FILE = CREDENTIALS_DIR / "token.json"
+
+def get_token_file(account_name):
+    """Return the token file path for a Gmail account."""
+
+    safe_account_name = (
+        account_name
+        .strip()
+        .lower()
+        .replace(" ", "_")
+        .replace("@", "_at_")
+        .replace(".", "_")
+    )
+
+    return CREDENTIALS_DIR / (
+        f"token_{safe_account_name}.json"
+    )
 
 
-def get_credentials():
-    """Authenticate the user and return Gmail API credentials."""
+def get_credentials(account_name):
+    """Authenticate a Gmail account and return its credentials."""
+
+    token_file = get_token_file(account_name)
 
     credentials = None
 
-    if TOKEN_FILE.exists():
+    if token_file.exists():
         credentials = Credentials.from_authorized_user_file(
-            TOKEN_FILE,
+            token_file,
             SCOPES,
         )
 
     if credentials is None or not credentials.valid:
 
-        if credentials and credentials.expired and credentials.refresh_token:
+        if (
+            credentials
+            and credentials.expired
+            and credentials.refresh_token
+        ):
             credentials.refresh(Request())
 
         else:
@@ -39,8 +62,12 @@ def get_credentials():
                 SCOPES,
             )
 
-            credentials = flow.run_local_server(port=0)
+            credentials = flow.run_local_server(
+                port=0
+            )
 
-        TOKEN_FILE.write_text(credentials.to_json())
+        token_file.write_text(
+            credentials.to_json()
+        )
 
     return credentials

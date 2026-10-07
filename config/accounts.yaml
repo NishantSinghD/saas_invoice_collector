@@ -1,0 +1,9 @@
+accounts:
+  - name: finance_account_1
+    email: finance1@example.com
+
+  - name: finance_account_2
+    email: finance2@example.com
+
+  - name: finance_account_3
+    email: finance3@example.com
