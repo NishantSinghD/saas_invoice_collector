@@ -6,3 +6,4 @@ output/
 credentials/
 token.json
 .pytest_cache/
+sample_data/
