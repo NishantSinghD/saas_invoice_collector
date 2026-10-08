@@ -1,6 +1,5 @@
-from urllib.parse import urlparse
-
 import httpx
+from urllib.parse import urlparse
 
 
 def extract_urls(text):

@@ -1,4 +1,3 @@
-
 import re
 from datetime import datetime
 from decimal import Decimal
@@ -22,9 +21,17 @@ def extract_invoice_data(
         )
         return match.group(1).strip() if match else None
 
-    vendor = find_value(r"^\s*Vendor:\s*(.+?)\s*$")
-    invoice_date_text = find_value(r"^\s*Invoice Date:\s*(.+?)\s*$")
-    invoice_number = find_value(r"^\s*Invoice Number:\s*(.+?)\s*$")
+    vendor = find_value(
+        r"^\s*Vendor:\s*(.+?)\s*$"
+    )
+
+    invoice_date_text = find_value(
+        r"^\s*Invoice Date:\s*(.+?)\s*$"
+    )
+
+    invoice_number = find_value(
+        r"^\s*Invoice\s+Number:\s*(.+?)\s*$"
+    )
 
     amount_match = re.search(
         r"^\s*(?:Amount|Amount Due|Total Due|Total):\s*"
@@ -35,7 +42,14 @@ def extract_invoice_data(
         re.IGNORECASE | re.MULTILINE,
     )
 
-    if not all([vendor, invoice_date_text, invoice_number, amount_match]):
+    if not all(
+        [
+            vendor,
+            invoice_date_text,
+            invoice_number,
+            amount_match,
+        ]
+    ):
         return None
 
     try:
@@ -43,17 +57,29 @@ def extract_invoice_data(
             invoice_date_text,
             "%B %d, %Y",
         ).date()
+
     except ValueError:
-        return None
+        try:
+            invoice_date = datetime.strptime(
+                invoice_date_text,
+                "%Y-%m-%d",
+            ).date()
+
+        except ValueError:
+            return None
 
     currency = (
-        amount_match.group(1) or amount_match.group(3) or ""
+        amount_match.group(1)
+        or amount_match.group(3)
+        or ""
     ).upper()
 
     if not currency:
         return None
 
-    amount = Decimal(amount_match.group(2).replace(",", ""))
+    amount = Decimal(
+        amount_match.group(2).replace(",", "")
+    )
 
     return InvoiceData(
         vendor=vendor,

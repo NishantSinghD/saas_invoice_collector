@@ -1,5 +1,6 @@
 import re
 from pathlib import Path
+
 from src.invoices.source_detector import detect_invoice_source
 from src.gmail.client import (
     download_attachment,
@@ -23,6 +24,15 @@ from src.invoices.output import (
 from src.pipeline import process_invoice_records
 
 
+def is_invoice_in_date_range(invoice, start_date, end_date):
+    """Return True when the invoice date falls within the requested range."""
+
+    if invoice is None:
+        return False
+
+    return start_date <= invoice.invoice_date <= end_date
+
+
 def download_pdf_attachments(
     service,
     messages,
@@ -32,13 +42,20 @@ def download_pdf_attachments(
     """Download PDF attachments and retain their email metadata."""
 
     download_directory = Path(download_directory)
-    download_directory.mkdir(parents=True, exist_ok=True)
+    download_directory.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
 
     downloaded_files = []
 
     for message_summary in messages:
         message_id = message_summary["id"]
-        message = get_message(service, message_id)
+
+        message = get_message(
+            service,
+            message_id,
+        )
 
         plain_text, _ = extract_message_body(message)
 
@@ -69,6 +86,7 @@ def download_pdf_attachments(
             destination = download_directory / (
                 f"{message_id}_{safe_filename}"
             )
+
             destination.write_bytes(content)
 
             downloaded_files.append(
@@ -81,6 +99,7 @@ def download_pdf_attachments(
             )
 
     return downloaded_files
+
 
 def process_email_body_invoices(
     service,
@@ -127,6 +146,7 @@ def process_email_body_invoices(
 
     return invoices
 
+
 def process_billing_portal_invoice(
     service,
     message,
@@ -155,6 +175,7 @@ def process_billing_portal_invoice(
         return None
 
     download_directory = Path(download_directory)
+
     download_directory.mkdir(
         parents=True,
         exist_ok=True,
@@ -164,12 +185,21 @@ def process_billing_portal_invoice(
         f"{message_id}_portal_invoice.pdf"
     )
 
-    downloaded_path = download_directory / portal_filename
-
-    download_portal_pdf(
-        portal_url,
-        downloaded_path,
+    downloaded_path = (
+        download_directory / portal_filename
     )
+
+    try:
+        download_portal_pdf(
+            portal_url,
+            downloaded_path,
+        )
+    except (ValueError, OSError) as error:
+        print(
+            f"Portal invoice could not be downloaded "
+            f"for message {message_id}: {error}"
+        )
+        return None
 
     invoice = process_invoice_pdf(
         downloaded_path,
@@ -191,6 +221,24 @@ def process_billing_portal_invoice(
 
     return invoice
 
+def process_invoice_pdf(
+    file_path,
+    source_account="",
+    source_email_id="",
+    email_body="",
+):
+    """Extract structured invoice data from a PDF."""
+
+    from src.invoices.processor import process_invoice_pdf as process_pdf
+
+    return process_pdf(
+        file_path,
+        source_account=source_account,
+        source_email_id=source_email_id,
+        email_body=email_body,
+    )
+
+
 def collect_and_process_invoices(
     service,
     messages,
@@ -199,6 +247,8 @@ def collect_and_process_invoices(
     summary_path,
     expected_vendors,
     source_account="",
+    start_date=None,
+    end_date=None,
 ):
     """Collect invoices from Gmail using the appropriate invoice source."""
 
@@ -207,6 +257,7 @@ def collect_and_process_invoices(
     portal_invoices = []
 
     download_directory = Path(download_directory)
+
     download_directory.mkdir(
         parents=True,
         exist_ok=True,
@@ -220,7 +271,10 @@ def collect_and_process_invoices(
             message_id,
         )
 
-        plain_text, html = extract_message_body(message)
+        plain_text, html = extract_message_body(
+            message
+        )
+
         attachments = get_attachments(message)
 
         source = detect_invoice_source(
@@ -248,10 +302,14 @@ def collect_and_process_invoices(
             )
 
             if portal_invoice is not None:
-                portal_invoices.append(portal_invoice)
+                portal_invoices.append(
+                    portal_invoice
+                )
 
         elif source == "email_body":
-            body_messages.append(message_summary)
+            body_messages.append(
+                message_summary
+            )
 
     attachment_invoices, _ = process_invoice_records(
         records=pdf_records,
@@ -276,6 +334,17 @@ def collect_and_process_invoices(
         + body_invoices
     )
 
+    if start_date is not None and end_date is not None:
+        invoices = [
+            invoice
+            for invoice in invoices
+            if is_invoice_in_date_range(
+                invoice,
+                start_date,
+                end_date,
+            )
+        ]
+
     write_summary_csv(
         invoices,
         summary_path,
@@ -292,6 +361,7 @@ def collect_and_process_invoices(
 
     return invoices, missing_vendors
 
+
 def collect_invoices_for_date_range(
     service,
     start_date,
@@ -302,7 +372,7 @@ def collect_invoices_for_date_range(
     expected_vendors,
     source_account="",
 ):
-    """Search Gmail for messages in a date range and process PDFs."""
+    """Search Gmail for messages in a date range and process invoices."""
 
     messages = get_messages_for_date_range(
         service,
@@ -318,4 +388,6 @@ def collect_invoices_for_date_range(
         summary_path=summary_path,
         expected_vendors=expected_vendors,
         source_account=source_account,
+        start_date=start_date,
+        end_date=end_date,
     )

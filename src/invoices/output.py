@@ -6,11 +6,6 @@ from reportlab.lib.pagesizes import LETTER
 from reportlab.pdfgen import canvas
 
 from src.invoices.models import InvoiceData
-import csv
-from pathlib import Path
-import re
-
-from src.invoices.models import InvoiceData
 
 
 def sanitize_filename(value):
@@ -46,6 +41,7 @@ def save_invoice_pdf(
     """Copy an invoice PDF into the standardized output folder."""
 
     output_directory = Path(output_directory)
+
     output_directory.mkdir(
         parents=True,
         exist_ok=True,
@@ -60,6 +56,7 @@ def save_invoice_pdf(
 
     return destination
 
+
 def save_invoice_body_as_pdf(
     email_body,
     invoice,
@@ -68,6 +65,7 @@ def save_invoice_body_as_pdf(
     """Create a PDF invoice from the email body."""
 
     output_directory = Path(output_directory)
+
     output_directory.mkdir(
         parents=True,
         exist_ok=True,
@@ -92,7 +90,12 @@ def save_invoice_body_as_pdf(
             y -= 12
             continue
 
-        pdf.drawString(x, y, line)
+        pdf.drawString(
+            x,
+            y,
+            line,
+        )
+
         y -= 14
 
         if y < 72:
@@ -120,7 +123,8 @@ def write_summary_csv(invoices, output_path):
         "amount",
         "currency",
         "source_account",
-        "file_path",
+        "source_type",
+        "file_link",
     ]
 
     with output_path.open(
@@ -143,8 +147,58 @@ def write_summary_csv(invoices, output_path):
                     "amount": str(invoice.amount),
                     "currency": invoice.currency,
                     "source_account": invoice.source_account,
-                    "file_path": invoice.file_path,
+                    "source_type": invoice.source_type,
+                    "file_link": Path(
+                        invoice.file_path
+                    ).as_posix(),
                 }
+            )
+
+    return output_path
+
+
+def write_combined_summary_csv(invoices, output_path):
+    """Write all account invoices to one consolidated CSV file."""
+
+    return write_summary_csv(
+        invoices,
+        output_path,
+    )
+
+
+def write_missing_vendors_csv(
+    missing_vendors,
+    output_path,
+):
+    """Write missing expected vendors to a CSV report."""
+
+    output_path = Path(output_path)
+
+    output_path.parent.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    with output_path.open(
+        "w",
+        newline="",
+        encoding="utf-8",
+    ) as file:
+        writer = csv.writer(file)
+
+        writer.writerow(
+            [
+                "vendor",
+                "status",
+            ]
+        )
+
+        for vendor in missing_vendors:
+            writer.writerow(
+                [
+                    vendor,
+                    "MISSING",
+                ]
             )
 
     return output_path

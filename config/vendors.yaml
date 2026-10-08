@@ -1,0 +1,29 @@
+expected_vendors:
+  - Slack
+  - Notion
+  - AWS
+  - Google Workspace
+  - GitHub
+  - OpenAI
+  - Linear
+  - Atlassian
+
+vendor_aliases:
+  Slack:
+    - Slack
+    - Slack Technologies
+  AWS:
+    - AWS
+    - Amazon Web Services
+  Google Workspace:
+    - Google Workspace
+    - Google
+  GitHub:
+    - GitHub
+    - GitHub Inc.
+  OpenAI:
+    - OpenAI
+    - OpenAI Inc.
+  Atlassian:
+    - Atlassian
+    - Atlassian Corporation

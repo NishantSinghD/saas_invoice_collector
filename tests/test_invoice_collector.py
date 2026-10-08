@@ -599,3 +599,180 @@ def test_collect_and_process_invoices_includes_billing_portal_invoice(
     assert invoices[0].vendor == "AWS"
     assert invoices[0].source_type == "attachment"
     assert missing == []
+
+def test_excludes_invoice_outside_requested_date_range(
+    tmp_path,
+    monkeypatch,
+):
+    message = {
+        "id": "gmail-message-old-invoice",
+    }
+
+    invoice = type(
+        "Invoice",
+        (),
+        {
+            "vendor": "Slack",
+            "invoice_date": date(2026, 8, 31),
+            "amount": 125,
+            "currency": "USD",
+            "invoice_number": "SL-2026-08-001",
+            "source_account": "finance-test@example.com",
+            "source_type": "attachment",
+            "file_path": str(
+                tmp_path / "2026-08_Slack_125.00.pdf"
+            ),
+        },
+    )()
+
+    monkeypatch.setattr(
+        invoice_collector,
+        "get_message",
+        lambda service, message_id: {
+            "id": message_id,
+            "payload": {},
+        },
+    )
+
+    monkeypatch.setattr(
+        invoice_collector,
+        "extract_message_body",
+        lambda message: ("", ""),
+    )
+
+    monkeypatch.setattr(
+        invoice_collector,
+        "get_attachments",
+        lambda message: [],
+    )
+
+    monkeypatch.setattr(
+        invoice_collector,
+        "detect_invoice_source",
+        lambda attachments, body: "email_body",
+    )
+
+    monkeypatch.setattr(
+        invoice_collector,
+        "process_email_body_invoices",
+        lambda **kwargs: [invoice],
+    )
+
+    monkeypatch.setattr(
+        invoice_collector,
+        "process_invoice_records",
+        lambda **kwargs: ([], []),
+    )
+
+    monkeypatch.setattr(
+        invoice_collector,
+        "write_summary_csv",
+        lambda invoices, summary_path: None,
+    )
+
+    invoices, missing = (
+        invoice_collector.collect_and_process_invoices(
+            service=object(),
+            messages=[message],
+            download_directory=tmp_path / "downloads",
+            output_directory=tmp_path / "invoices",
+            summary_path=tmp_path / "summary.csv",
+            expected_vendors=["Slack"],
+            source_account="finance-test@example.com",
+            start_date=date(2026, 9, 1),
+            end_date=date(2026, 9, 30),
+        )
+    )
+
+    assert invoices == []
+    assert missing == ["Slack"]
+
+
+def test_includes_invoice_inside_requested_date_range(
+    tmp_path,
+    monkeypatch,
+):
+    message = {
+        "id": "gmail-message-current-invoice",
+    }
+
+    invoice = type(
+        "Invoice",
+        (),
+        {
+            "vendor": "Slack",
+            "invoice_date": date(2026, 9, 15),
+            "amount": 125,
+            "currency": "USD",
+            "invoice_number": "SL-2026-09-001",
+            "source_account": "finance-test@example.com",
+            "source_type": "attachment",
+            "file_path": str(
+                tmp_path / "2026-09_Slack_125.00.pdf"
+            ),
+        },
+    )()
+
+    monkeypatch.setattr(
+        invoice_collector,
+        "get_message",
+        lambda service, message_id: {
+            "id": message_id,
+            "payload": {},
+        },
+    )
+
+    monkeypatch.setattr(
+        invoice_collector,
+        "extract_message_body",
+        lambda message: ("", ""),
+    )
+
+    monkeypatch.setattr(
+        invoice_collector,
+        "get_attachments",
+        lambda message: [],
+    )
+
+    monkeypatch.setattr(
+        invoice_collector,
+        "detect_invoice_source",
+        lambda attachments, body: "email_body",
+    )
+
+    monkeypatch.setattr(
+        invoice_collector,
+        "process_email_body_invoices",
+        lambda **kwargs: [invoice],
+    )
+
+    monkeypatch.setattr(
+        invoice_collector,
+        "process_invoice_records",
+        lambda **kwargs: ([], []),
+    )
+
+    monkeypatch.setattr(
+        invoice_collector,
+        "write_summary_csv",
+        lambda invoices, summary_path: None,
+    )
+
+    invoices, missing = (
+        invoice_collector.collect_and_process_invoices(
+            service=object(),
+            messages=[message],
+            download_directory=tmp_path / "downloads",
+            output_directory=tmp_path / "invoices",
+            summary_path=tmp_path / "summary.csv",
+            expected_vendors=["Slack"],
+            source_account="finance-test@example.com",
+            start_date=date(2026, 9, 1),
+            end_date=date(2026, 9, 30),
+        )
+    )
+
+    assert len(invoices) == 1
+    assert invoices[0].vendor == "Slack"
+    assert invoices[0].invoice_date == date(2026, 9, 15)
+    assert missing == []
