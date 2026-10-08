@@ -1,0 +1,38 @@
+vendor,date,amount,currency,source_account,source_type,file_link
+Slack,2026-09-15,125.00,USD,,attachment,output/sample_submission/invoices/2026-09_Slack_125.00.pdf
+Notion,2026-09-05,18.00,USD,,attachment,output/sample_submission/invoices/2026-09_Notion_18.00.pdf
+AWS,2026-09-03,482.71,USD,,attachment,output/sample_submission/invoices/2026-09_AWS_482.71.pdf
+GitHub,2026-09-08,96.00,USD,,attachment,output/sample_submission/invoices/2026-09_GitHub_96.00.pdf
+OpenAI,2026-09-10,220.00,USD,,attachment,output/sample_submission/invoices/2026-09_OpenAI_220.00.pdf
+Linear,2026-09-12,80.00,USD,,attachment,output/sample_submission/invoices/2026-09_Linear_80.00.pdf
+Atlassian,2026-09-18,145.00,USD,,attachment,output/sample_submission/invoices/2026-09_Atlassian_145.00.pdf
+Google Workspace,2026-09-20,72.00,USD,,attachment,output/sample_submission/invoices/2026-09_Google_Workspace_72.00.pdf
+Notion,2026-09-22,25.00,USD,,attachment,output/sample_submission/invoices/2026-09_Notion_25.00.pdf
+AWS,2026-09-25,315.42,USD,,attachment,output/sample_submission/invoices/2026-09_AWS_315.42.pdf
+GitHub,2026-09-26,48.00,USD,,attachment,output/sample_submission/invoices/2026-09_GitHub_48.00.pdf
+Slack,2026-09-28,125.00,USD,,attachment,output/sample_submission/invoices/2026-09_Slack_125.00.pdf
+Notion,2026-09-04,22.00,USD,,attachment,output/sample_submission/invoices/2026-09_Notion_22.00.pdf
+AWS,2026-09-06,731.25,USD,,attachment,output/sample_submission/invoices/2026-09_AWS_731.25.pdf
+Google Workspace,2026-09-07,144.00,USD,,attachment,output/sample_submission/invoices/2026-09_Google_Workspace_144.00.pdf
+GitHub,2026-09-09,96.00,USD,,attachment,output/sample_submission/invoices/2026-09_GitHub_96.00.pdf
+OpenAI,2026-09-11,310.00,USD,,attachment,output/sample_submission/invoices/2026-09_OpenAI_310.00.pdf
+Linear,2026-09-13,80.00,USD,,attachment,output/sample_submission/invoices/2026-09_Linear_80.00.pdf
+Atlassian,2026-09-16,210.00,USD,,attachment,output/sample_submission/invoices/2026-09_Atlassian_210.00.pdf
+Slack,2026-09-19,250.00,USD,,attachment,output/sample_submission/invoices/2026-09_Slack_250.00.pdf
+AWS,2026-09-21,625.18,USD,,attachment,output/sample_submission/invoices/2026-09_AWS_625.18.pdf
+GitHub,2026-09-23,144.00,USD,,attachment,output/sample_submission/invoices/2026-09_GitHub_144.00.pdf
+OpenAI,2026-09-24,190.00,USD,,attachment,output/sample_submission/invoices/2026-09_OpenAI_190.00.pdf
+Notion,2026-09-27,36.00,USD,,attachment,output/sample_submission/invoices/2026-09_Notion_36.00.pdf
+AWS,2026-09-02,912.33,USD,,attachment,output/sample_submission/invoices/2026-09_AWS_912.33.pdf
+Google Workspace,2026-09-05,288.00,USD,,attachment,output/sample_submission/invoices/2026-09_Google_Workspace_288.00.pdf
+GitHub,2026-09-08,192.00,USD,,attachment,output/sample_submission/invoices/2026-09_GitHub_192.00.pdf
+OpenAI,2026-09-12,450.00,USD,,attachment,output/sample_submission/invoices/2026-09_OpenAI_450.00.pdf
+Linear,2026-09-14,120.00,USD,,attachment,output/sample_submission/invoices/2026-09_Linear_120.00.pdf
+Atlassian,2026-09-17,320.00,USD,,attachment,output/sample_submission/invoices/2026-09_Atlassian_320.00.pdf
+Slack,2026-09-20,375.00,USD,,attachment,output/sample_submission/invoices/2026-09_Slack_375.00.pdf
+Notion,2026-09-22,45.00,USD,,attachment,output/sample_submission/invoices/2026-09_Notion_45.00.pdf
+AWS,2026-09-24,1184.62,USD,,attachment,output/sample_submission/invoices/2026-09_AWS_1184.62.pdf
+Google Workspace,2026-09-26,360.00,USD,,attachment,output/sample_submission/invoices/2026-09_Google_Workspace_360.00.pdf
+OpenAI,2026-09-28,275.00,USD,,attachment,output/sample_submission/invoices/2026-09_OpenAI_275.00.pdf
+GitHub,2026-09-29,240.00,USD,,attachment,output/sample_submission/invoices/2026-09_GitHub_240.00.pdf
+Slack Technologies,2026-09-15,125.00,USD,,attachment,output/sample_submission/invoices/2026-09_Slack_Technologies_125.00.pdf
